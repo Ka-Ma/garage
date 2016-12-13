@@ -16,7 +16,7 @@ int main(void)
 	string statusOld = "0"; 
 	string gpio21_val; // state of input pin
 	string logline;
-	email* gOpen = new email("root","root","WARNING! Garage is open","At the time of this email the garage has been open for half an hour.");
+	email* gOpen = new email("root","kkjayne@gmail.com","WARNING! Garage is open","At the time of this email the garage has been open for half an hour.");
 
 	ofstream doorLog;
 	doorLog.open("doorLog.txt", ios::app);
@@ -51,7 +51,7 @@ int main(void)
 
 			if(gpio21_val =="1"){
 				cout << "circuit closed" << endl;
-				cout << "the garage is open, need an else to evaluate how long it is open" << endl;
+				cout << "the garage is open, need to close it" << endl;
 				
 				logline.append (timeNowStr);
 				logline.append (" - opened");

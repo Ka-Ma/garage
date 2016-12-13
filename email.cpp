@@ -35,7 +35,13 @@ void email::setBody(string bdy){
 }
 
 void email::sendEmail(){
-	string msg =  "echo -e 'FROM: " + sender + "\nTO: " + receiver + "\nSubject: " + subject + "\n\n" + body + "' | sendmail -t";
+	string msg =  "echo sendmail " + this->receiver;
+//	+ " < message.mail"; //so much fussing made most of private members irrelevant
 	
-	system(msg.c_str());	
+	cout << "this should write to cli: " << msg << endl;
+	
+	system(msg.c_str());
+	system(this->sender.c_str());
+	system(this->subject.c_str());
+	system(this->body.c_str());
 }
