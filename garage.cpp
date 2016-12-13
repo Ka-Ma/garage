@@ -42,7 +42,6 @@ int main(void)
 		gpio21->getval_gpio(gpio21_val);
 
 		if (statusOld != gpio21_val){
-			timeNow = time(NULL); 
 			timeNowStr = getStringTimeNow();
 
 			if(gpio21_val == "0"){
