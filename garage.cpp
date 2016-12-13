@@ -8,20 +8,26 @@
 
 using namespace std;
 
+string getStringTimeNow();
+
 int main(void)
 {
 	time_t timeOld = time(NULL);
-	time_t timeNow;
+	//time_t timeNow;
 	string timeNowStr;
-	string statusOld = "0"; 
+	string statusOld = "0"; // starts closed
 	string gpio21_val; // state of input pin
 	string logline;
-	email* gOpen = new email("root","kkjayne@gmail.com","WARNING! Garage is open","At the time of this email the garage has been open for half an hour.");
+	email* gOpen = new email("root","kama,flex","WARNING! Garage is open","At the time of this email the garage has been open for half an hour.");
 
 	ofstream doorLog;
 	doorLog.open("doorLog.txt", ios::app);
 	if(doorLog.is_open()){
 		cout << "logging" << endl;
+		logline.append(getStringTimeNow());
+		logline.append(" - Pi booted up");
+		doorLog << logline << endl;
+		logline = "";
 	}else{
 		cout << "unable to log" << endl;
 	}
@@ -37,12 +43,11 @@ int main(void)
 
 		if (statusOld != gpio21_val){
 			timeNow = time(NULL); 
-			timeNowStr = ctime(&timeNow); //stringify time
-			timeNowStr.erase(timeNowStr.end()-1, timeNowStr.end()); //remove newline at end
+			timeNowStr = getStringTimeNow();
 
 			if(gpio21_val == "0"){
 				cout << "circuit open" << endl;
-				cout << "the garage is closed all is well" << endl;
+				cout << "the garage is closed, all is well" << endl;
 				
 				logline.append (timeNowStr);
 				logline.append (" - closed");
@@ -65,10 +70,9 @@ int main(void)
 			timeOld = time(NULL);
 			logline = "";
 		}else{
-			if(gpio21_val == "1" && difftime(time(NULL),timeOld) > 30) {
-				timeNow = time(NULL); 
-				timeNowStr = ctime(&timeNow); //stringify time
-				timeNowStr.erase(timeNowStr.end()-1, timeNowStr.end()); //remove newline at end
+			// if garage is open and has been for 30 minutes
+			if(gpio21_val == "1" && difftime(time(NULL),timeOld) > 1800) {
+				timeNowStr = getStringTimeNow();
 			
 				cout << "The garage has been open for too long" << endl;
 				gOpen->sendEmail();
@@ -87,4 +91,12 @@ int main(void)
 	gpio21->unexport_gpio();
 
 	return 0;
+}
+
+string getStringTimeNow() {
+	time_t timeNow = time(NULL); 
+	string timeNowStr = ctime(&timeNow); //stringify time
+	timeNowStr.erase(timeNowStr.end()-1, timeNowStr.end()); //remove newline at end
+	
+	return timeNowStr;
 }

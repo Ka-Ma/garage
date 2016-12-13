@@ -4,6 +4,7 @@
 #include <sstream>
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 #include "email.h"
 
 using namespace std;
@@ -37,15 +38,22 @@ void email::setBody(string bdy){
 }
 
 void email::makeMessage() {
+	time_t timeNow = time(NULL);
+	string timeNowStr = ctime(&timeNow);
+	timeNowStr.erase(timeNowStr.end()-1, timeNowStr.end());
 	ofstream messageDoc;
-	messageDoc.open("message.mail", ios::app);
+	
+	messageDoc.open("message.mail", ios::trunc);
+	
 	if(messageDoc.is_open()){
 		cout << "creating message.mail" << endl;
 	}else{
 		cout << "unable to create message.mail" << endl;
 	}
+	
 	messageDoc << "Subject: " << this->subject << endl;
 	messageDoc << this->body << endl;
+	messageDoc << "\nThis session of monitoring has been running since " << timeNowStr << endl;
 	
 	messageDoc.close();
 }
@@ -53,7 +61,7 @@ void email::makeMessage() {
 void email::sendEmail(){
 	FILE *in;
 	char buff[512];
-	string msg =  "echo sendmail " + this->receiver + " < message.mail"; 
+	string msg =  "sendmail " + this->receiver + " < message.mail"; 
 	
 	if(!(in = popen(msg.c_str(),"w"))){
 		cout << "can't send email"<<endl;
