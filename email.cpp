@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdlib.h>
+#include <stdio.h>
 #include "email.h"
 
 using namespace std;
@@ -16,6 +17,7 @@ email::email(string sndr, string rcvr, string sbj, string bdy){
 	setReceiver(rcvr);
 	setSubject(sbj);
 	setBody(bdy);
+	makeMessage();
 }
 
 void email::setSender(string sndr){
@@ -34,14 +36,32 @@ void email::setBody(string bdy){
 	this->body = bdy;
 }
 
+void email::makeMessage() {
+	ofstream messageDoc;
+	messageDoc.open("message.mail", ios::app);
+	if(messageDoc.is_open()){
+		cout << "creating message.mail" << endl;
+	}else{
+		cout << "unable to create message.mail" << endl;
+	}
+	messageDoc << "Subject: " << this->subject << endl;
+	messageDoc << this->body << endl;
+	
+	messageDoc.close();
+}
+
 void email::sendEmail(){
-	string msg =  "echo sendmail " + this->receiver;
-//	+ " < message.mail"; //so much fussing made most of private members irrelevant
+	FILE *in;
+	char buff[512];
+	string msg =  "echo sendmail " + this->receiver + " < message.mail"; 
 	
-	cout << "this should write to cli: " << msg << endl;
+	if(!(in = popen(msg.c_str(),"w"))){
+		cout << "can't send email"<<endl;
+	}
+		
+	while(fgets(buff, sizeof(buff), in) != NULL){
+		cout << buff;
+	}
 	
-	system(msg.c_str());
-	system(this->sender.c_str());
-	system(this->subject.c_str());
-	system(this->body.c_str());
+	pclose(in);
 }

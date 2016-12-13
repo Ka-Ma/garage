@@ -13,6 +13,7 @@ public:
 	void setReceiver(string rcvr);
 	void setSubject(string sbj);
 	void setBody(string bdy);
+	void makeMessage();
 	void sendEmail();
 private:
 	string sender;
