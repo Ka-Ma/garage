@@ -1,6 +1,6 @@
 #include <iostream>
 #include <time.h>
-#include <string.h>
+#include <string>
 #include <unistd.h> //for usleep
 #include <fstream> //for logging
 #include "GPIOClass.h"
@@ -16,7 +16,7 @@ int main(void)
 	string statusOld = "0"; 
 	string gpio21_val; // state of input pin
 	string logline;
-	email* gOpen = new email();
+	email* gOpen = new email("root","root","WARNING! Garage is open","At the time of this email the garage has been open for half an hour.");
 
 	ofstream doorLog;
 	doorLog.open("doorLog.txt", ios::app);
@@ -38,7 +38,7 @@ int main(void)
 		if (statusOld != gpio21_val){
 			timeNow = time(NULL); 
 			timeNowStr = ctime(&timeNow); //stringify time
-			timeNowStr.pop_back(); //remove newline at end
+			timeNowStr.erase(timeNowStr.end()-1, timeNowStr.end()); //remove newline at end
 
 			if(gpio21_val == "0"){
 				cout << "circuit open" << endl;
@@ -68,7 +68,7 @@ int main(void)
 			if(gpio21_val == "1" && difftime(time(NULL),timeOld) > 30) {
 				timeNow = time(NULL); 
 				timeNowStr = ctime(&timeNow); //stringify time
-				timeNowStr.pop_back(); //remove newline at end
+				timeNowStr.erase(timeNowStr.end()-1, timeNowStr.end()); //remove newline at end
 			
 				cout << "The garage has been open for too long" << endl;
 				gOpen->sendEmail();

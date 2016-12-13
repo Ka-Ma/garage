@@ -35,6 +35,7 @@ void email::setBody(string bdy){
 }
 
 void email::sendEmail(){
-	string msg =  "echo -e \"FROM: " + sender + "\nTO: " + receiver + "\nSubject: " + subject + "\n\n" + body + "\" | sendmail -t";
-	system(msg);
+	string msg =  "echo -e 'FROM: " + sender + "\nTO: " + receiver + "\nSubject: " + subject + "\n\n" + body + "' | sendmail -t";
+	
+	system(msg.c_str());	
 }
