@@ -6,3 +6,4 @@ g++ GPIOClass.cpp email.cpp garage.cpp -o garage
 For email, using Postfix and aliases: as per this guide - https://blog.dantup.com/2016/04/setting-up-raspberry-pi-raspbian-jessie-to-send-email/
 
 To have program run on boot: 
+...
