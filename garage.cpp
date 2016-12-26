@@ -13,17 +13,17 @@ string getStringTimeNow();
 int main(void)
 {
 	time_t timeOld = time(NULL);
-	//time_t timeNow;
 	string timeNowStr;
 	string statusOld = "0"; // starts closed
 	string gpio21_val; // state of input pin
 	string logline;
 	email* gOpen = new email("root","kama,flex","WARNING! Garage is open","At the time of this email the garage has been open for half an hour.");
 
+	//opening file to log door activity
 	ofstream doorLog;
 	doorLog.open("doorLog.txt", ios::app);
 	if(doorLog.is_open()){
-		cout << "logging" << endl;
+		cout << "logging door activity" << endl;
 		logline.append(getStringTimeNow());
 		logline.append(" - Pi booted up");
 		doorLog << logline << endl;
@@ -31,14 +31,16 @@ int main(void)
 	}else{
 		cout << "unable to log" << endl;
 	}
-
+	
+	//enabling GPIO for magnetic switch attached to door
 	GPIOClass* gpio21 = new GPIOClass("21");
-
 	gpio21->export_gpio();
 	gpio21->setdir_gpio("in");
-
+	
+	//infinite loop for monitoring door
 	while(1){
-		usleep(50000);
+		usleep(1000000); //wait 1 second
+		
 		gpio21->getval_gpio(gpio21_val);
 
 		if (statusOld != gpio21_val){
