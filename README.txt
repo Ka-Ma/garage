@@ -1,7 +1,9 @@
 This project uses a headless Raspberry Pi and C++ code to monitor the garage door (via a magnetic switch plugged into one of the GPIO) and send an email to the home owners to alert them to their forgetfulness should they leave it open longer than half an hour.
+Updating to include an LCD screen to show up time & IP Address this requires WiringPi therefore updating to use that instead of GPIOClass
 
 To compile, type into CLI:
-g++ GPIOClass.cpp email.cpp garage.cpp -o garage
+OLD: g++ GPIOClass.cpp email.cpp garage.cpp -o garage
+NEW: g++ -std=c++0x email.cpp garage.cpp -o garage -lwiringPi -lwiringPiDev
 
 For email, using Postfix and aliases: as per this guide - https://blog.dantup.com/2016/04/setting-up-raspberry-pi-raspbian-jessie-to-send-email/
 
