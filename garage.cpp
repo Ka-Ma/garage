@@ -1,5 +1,6 @@
 #include <iostream>
 #include <time.h>
+#include <sstream> //to convert number to string
 #include <string>
 #include <unistd.h> //for usleep
 #include <fstream> //for logging
@@ -18,6 +19,9 @@ using namespace std;
 #define LCD_D6 2
 #define LCD_D7 3
 
+//defining wait time before sending warning email (in seconds)
+#define WAITTIME 1800
+
 //functions
 string getStringTimeNow();
 string calcUpTime(time_t tStart);
@@ -29,8 +33,9 @@ int main(void)
 	int statusOld = 0; // starts closed
 	int gpio21_val; // state of input pin garage door switch
 	string logline;
-	time_t timeStart = time(NULL);
+	time_t timeStart = time(NULL); //gets time of boot up
 	string upTime;
+	string doorState = "Closed"; // starts closed
 	email* gOpen = new email("root","kama,flex","WARNING! Garage is open","At the time of this email the garage has been open for half an hour.");
 	int lcd;
 	wiringPiSetup();
@@ -65,8 +70,11 @@ int main(void)
 		gpio21_val = digitalRead(GDS);
 		
 		//update LCD
+		lcdClear(lcd);
 		lcdPosition(lcd,0,0);
 		lcdPuts(lcd, "Up time: ");
+		lcdPosition(lcd,10,0);
+		lcdPuts(lcd, doorState.c_str());
 		upTime = calcUpTime(timeStart); //days, hours, mins, secs eg: 34d 23h 59m 59s
 		lcdPosition(lcd,0,1);
 		lcdPuts(lcd, upTime.c_str());
@@ -79,6 +87,8 @@ int main(void)
 				cout << "circuit open" << endl;
 				cout << "the garage is closed, all is well" << endl;
 				
+				doorState = "Closed";
+				
 				logline.append (timeNowStr);
 				logline.append (" - closed");
 				doorLog << logline << endl;
@@ -87,6 +97,8 @@ int main(void)
 			if(gpio21_val == 1){
 				cout << "circuit closed" << endl;
 				cout << "the garage is open, need to close it" << endl;
+				
+				doorState = "Open";
 				
 				logline.append (timeNowStr);
 				logline.append (" - opened");
@@ -100,8 +112,8 @@ int main(void)
 			timeOld = time(NULL);
 			logline = "";
 		}else{
-			// if garage is open and has been for 30 minutes
-			if(gpio21_val == 1 && difftime(time(NULL),timeOld) > 1800) {
+			// if garage is open and has been for the defined number of seconds
+			if(gpio21_val == 1 && difftime(time(NULL),timeOld) > WAITTIME) {
 				timeNowStr = getStringTimeNow();
 			
 				cout << "The garage has been open for too long" << endl;
@@ -139,7 +151,19 @@ string calcUpTime(time_t tStart) {
 	int hours = minutes/60;
 	int hrs = hours%60;
 	int days = hours/24;
-	int dy = dy%24;
+	int dy = days%24;
+	
+	//trouble shooting: 
+	/* cout << "timeStart " << tStart << endl;
+	cout << "timeNow " << timeNow << endl;
+	cout << "difference in seconds " <<seconds << endl;
+	cout << "modded seconds " << secs << endl;
+	cout << "seconds converted to minutes " << minutes << endl;
+	cout << "modded minutes " << mins << endl;
+	cout << "minutes converted to hours " << hours << endl;
+	cout << "modded hours " << hrs << endl;
+	cout << "hours converted to days " << days << endl;
+	cout << "modded days " << dy << endl; */
 	
 	string duration = to_string(dy) + "d ";
 	if(hrs < 10){
@@ -156,6 +180,8 @@ string calcUpTime(time_t tStart) {
 		duration = duration.append("0");
 	}
 	duration = duration.append(to_string(secs)+"s");
+		
+	//cout << "calculated uptime: " << duration << endl;	
 		
 	return duration;
 }
