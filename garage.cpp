@@ -20,7 +20,8 @@ using namespace std;
 #define LCD_D7 3
 
 //defining wait time before sending warning email (in seconds)
-#define WAITTIME 1800
+#define DESIREDWAIT 15 //in minutes
+#define WAITTIME 60*DESIREDWAIT //calculated
 
 //functions
 string getStringTimeNow();
@@ -36,7 +37,10 @@ int main(void)
 	time_t timeStart = time(NULL); //gets time of boot up
 	string upTime;
 	string doorState = "Closed"; // starts closed
-	email* gOpen = new email("root","kama,flex","WARNING! Garage is open","At the time of this email the garage has been open for half an hour.");
+	string message = "At the time of this email the garage has been open for ";
+	message.append(to_string(DESIREDWAIT));
+	message.append(" minutes.");
+	email* gOpen = new email("root","kama,flex","WARNING! Garage is open",message);
 	int lcd;
 	wiringPiSetup();
 	
@@ -78,7 +82,10 @@ int main(void)
 		upTime = calcUpTime(timeStart); //days, hours, mins, secs eg: 34d 23h 59m 59s
 		lcdPosition(lcd,0,1);
 		lcdPuts(lcd, upTime.c_str());
-				
+
+/*		//troubleshooting
+		cout << "uptime to be displayed on lcd: " << upTime << endl;
+*/				
 		//checking if status changed
 		if (statusOld != gpio21_val){
 			timeNowStr = getStringTimeNow();
@@ -144,17 +151,18 @@ string getStringTimeNow() {
 
 string calcUpTime(time_t tStart) {
 	time_t timeNow = time(NULL);
+//	tStart = timeNow - 24*60*60-127;
 	int seconds = difftime(timeNow, tStart);
 	int secs = seconds%60;
 	int minutes = seconds/60;
 	int mins = minutes%60;
 	int hours = minutes/60;
-	int hrs = hours%60;
+	int hrs = hours%24;
 	int days = hours/24;
 	int dy = days%24;
 	
-	//trouble shooting: 
-	/* cout << "timeStart " << tStart << endl;
+/*	//trouble shooting: 
+	cout << "timeStart " << tStart << endl;
 	cout << "timeNow " << timeNow << endl;
 	cout << "difference in seconds " <<seconds << endl;
 	cout << "modded seconds " << secs << endl;
@@ -163,8 +171,8 @@ string calcUpTime(time_t tStart) {
 	cout << "minutes converted to hours " << hours << endl;
 	cout << "modded hours " << hrs << endl;
 	cout << "hours converted to days " << days << endl;
-	cout << "modded days " << dy << endl; */
-	
+	cout << "modded days " << dy << endl;
+*/	
 	string duration = to_string(dy) + "d ";
 	if(hrs < 10){
 		duration = duration.append("0");
