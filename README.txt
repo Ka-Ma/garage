@@ -6,6 +6,7 @@ OLD: g++ GPIOClass.cpp email.cpp garage.cpp -o garage
 NEW: g++ -std=c++0x email.cpp garage.cpp -o garage -lwiringPi -lwiringPiDev
 
 For email, using Postfix and aliases: as per this guide - https://blog.dantup.com/2016/04/setting-up-raspberry-pi-raspbian-jessie-to-send-email/
+altered to use actual gmail account as per this guide (did not have to make any changes to code) - https://www.linode.com/docs/email/postfix/configure-postfix-to-send-mail-using-gmail-and-google-apps-on-debian-or-ubuntu/
 
 To have program run on boot: 
 ...
