@@ -25,7 +25,7 @@ using namespace std;
 
 //functions
 string getStringTimeNow();
-string calcUpTime(time_t tStart);
+string calcCountTime(time_t tStart, int type);
 
 int main(void)
 {
@@ -35,7 +35,9 @@ int main(void)
 	int gpio21_val; // state of input pin garage door switch
 	string logline;
 	time_t timeStart = time(NULL); //gets time of boot up
+	time_t timeOpened; // will be set when garage is first detected open
 	string upTime;
+	string openTime;
 	string doorState = "Closed"; // starts closed
 	string message = "At the time of this email the garage has been open for ";
 	message.append(to_string(DESIREDWAIT));
@@ -49,6 +51,12 @@ int main(void)
 		printf("lcd init failed");
 		return -1;
 	}
+	lcdPosition(lcd,0,0);
+	lcdPuts(lcd,"Welcome");
+	lcdPosition(lcd,0,1);
+	lcdPuts(lcd,"Starting Up...");
+	usleep(2000000); //wait 2 seconds	
+	lcdClear(lcd);
 	
 	//opening file to log door activity
 	ofstream doorLog;
@@ -74,63 +82,77 @@ int main(void)
 		gpio21_val = digitalRead(GDS);
 		
 		//update LCD
-		lcdClear(lcd);
 		lcdPosition(lcd,0,0);
 		lcdPuts(lcd, "Up time: ");
-		lcdPosition(lcd,10,0);
-		lcdPuts(lcd, doorState.c_str());
-		upTime = calcUpTime(timeStart); //days, hours, mins, secs eg: 34d 23h 59m 59s
-		lcdPosition(lcd,0,1);
+		upTime = calcCountTime(timeStart, 1); 
 		lcdPuts(lcd, upTime.c_str());
-
-/*		//troubleshooting
-		cout << "uptime to be displayed on lcd: " << upTime << endl;
-*/				
+		lcdPosition(lcd,0,1);
+		lcdPuts(lcd, doorState.c_str());
+		
+		//troubleshooting
+		//cout << "uptime to be displayed on lcd: " << upTime << endl;
+				
 		//checking if status changed
 		if (statusOld != gpio21_val){
 			timeNowStr = getStringTimeNow();
 
 			if(gpio21_val == 0){
-				cout << "circuit open" << endl;
-				cout << "the garage is closed, all is well" << endl;
+				//cout << "circuit open" << endl;
+				//cout << "the garage is closed, all is well" << endl;
 				
 				doorState = "Closed";
 				
 				logline.append (timeNowStr);
 				logline.append (" - closed");
 				doorLog << logline << endl;
+				
+				lcdClear(lcd);
 			}
 
 			if(gpio21_val == 1){
-				cout << "circuit closed" << endl;
-				cout << "the garage is open, need to close it" << endl;
+				//cout << "circuit closed" << endl;
+				//cout << "the garage is open, need to close it" << endl;
 				
-				doorState = "Open";
+				doorState = "Open: ";
+				timeOpened = time(NULL);
 				
 				logline.append (timeNowStr);
 				logline.append (" - opened");
 				doorLog << logline << endl;
-
 			}
 			statusOld = gpio21_val;
 
-			cout << "seconds since last change: " << difftime(time(NULL),timeOld) << endl;
+			//cout << "seconds since last change: " << difftime(time(NULL),timeOld) << endl;
 
 			timeOld = time(NULL);
 			logline = "";
 		}else{
+			if(gpio21_val == 1){
+				//update lcd with open count up
+				openTime = calcCountTime(timeOpened, 2);
+				lcdPosition(lcd,7,1);
+				lcdPuts(lcd, openTime.c_str());
+			}
+			
 			// if garage is open and has been for the defined number of seconds
 			if(gpio21_val == 1 && difftime(time(NULL),timeOld) > WAITTIME) {
 				timeNowStr = getStringTimeNow();
 			
-				cout << "The garage has been open for too long" << endl;
+				//cout << "The garage has been open for too long" << endl;
+				
+				//it would be nice to construct email message here to be more timely but i have to figure out the segmentation fault
 				gOpen->sendEmail();
+				
 				logline.append (timeNowStr);
 				logline.append (" - email sent");
 				doorLog << logline << endl;
 
 				timeOld = time(NULL);
 				logline = "";
+				
+				//update lcd with Email sent E
+				lcdPosition(lcd,15,1);
+				lcdPuts(lcd, "E");
 			}
 		}
 	}
@@ -149,9 +171,10 @@ string getStringTimeNow() {
 	return timeNowStr;
 }
 
-string calcUpTime(time_t tStart) {
+string calcCountTime(time_t tStart, int type) {
+	string duration = "";
 	time_t timeNow = time(NULL);
-//	tStart = timeNow - 24*60*60-127;
+
 	int seconds = difftime(timeNow, tStart);
 	int secs = seconds%60;
 	int minutes = seconds/60;
@@ -161,35 +184,48 @@ string calcUpTime(time_t tStart) {
 	int days = hours/24;
 	int dy = days%24;
 	
-/*	//trouble shooting: 
-	cout << "timeStart " << tStart << endl;
-	cout << "timeNow " << timeNow << endl;
-	cout << "difference in seconds " <<seconds << endl;
-	cout << "modded seconds " << secs << endl;
-	cout << "seconds converted to minutes " << minutes << endl;
-	cout << "modded minutes " << mins << endl;
-	cout << "minutes converted to hours " << hours << endl;
-	cout << "modded hours " << hrs << endl;
-	cout << "hours converted to days " << days << endl;
-	cout << "modded days " << dy << endl;
-*/	
-	string duration = to_string(dy) + "d ";
-	if(hrs < 10){
-		duration = duration.append("0");
-	}
-	duration = duration.append(to_string(hrs)+"h ");
+	if (type == 1){ //as the count gets higher show diff info
+		if(dy > 1){
+			duration = duration + to_string(dy) + "d ";
+			
+			if(hrs < 10){
+				duration = duration.append("0");
+			}
+			duration = duration.append(to_string(hrs)+"h ");
+		}else if(hrs > 1){
+			if(hrs < 10){
+				duration = duration.append("0");
+			}
+			duration = duration.append(to_string(hrs)+"h ");
 	
-	if(mins<10){
-		duration = duration.append("0");
+			if(mins<10){
+				duration = duration.append("0");
+			}
+			duration = duration.append(to_string(mins)+"m ");
+		}else {
+			if(mins<10){
+				duration = duration.append("0");
+			}
+			duration = duration.append(to_string(mins)+"m ");
+		
+			if(secs<10){
+				duration = duration.append("0");
+			}
+			duration = duration.append(to_string(secs)+"s");
+		}
 	}
-	duration = duration.append(to_string(mins)+"m ");
 	
-	if(secs<10){
-		duration = duration.append("0");
+	if(type == 2){ // mins & secs
+		if(mins<10){
+			duration = duration.append("0");
+		}
+		duration = duration.append(to_string(mins)+"m ");
+		
+		if(secs<10){
+			duration = duration.append("0");
+		}
+		duration = duration.append(to_string(secs)+"s");
 	}
-	duration = duration.append(to_string(secs)+"s");
-		
-	//cout << "calculated uptime: " << duration << endl;	
-		
+			
 	return duration;
 }
